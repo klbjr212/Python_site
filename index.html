@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Python in Browser</title>
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<title>Python in Browser</title>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+
 </head>
 
 <body>
 
 <h2>Run Python in Your Browser</h2>
 
-<textarea id="code" rows="8" cols="50">
+<textarea id="code" rows="10" cols="60">
 for i in range(5):
     print("Hello", i)
 </textarea>
@@ -21,11 +23,43 @@ for i in range(5):
 <pre id="output"></pre>
 
 <script>
+
+let pyodide;
+
+// Load Python once when page loads
+async function loadPython(){
+    pyodide = await loadPyodide();
+}
+
+loadPython();
+
+
+// TAB indentation for Python
+document.getElementById("code").addEventListener("keydown", function(e) {
+
+    if (e.key === "Tab") {
+
+        e.preventDefault();
+
+        let start = this.selectionStart;
+        let end = this.selectionEnd;
+
+        this.value =
+            this.value.substring(0, start) +
+            "    " +
+            this.value.substring(end);
+
+        this.selectionStart = this.selectionEnd = start + 4;
+    }
+
+});
+
+
 async function runPython() {
 
-    const pyodide = await loadPyodide();
-
     let code = document.getElementById("code").value;
+
+    document.getElementById("output").textContent = "";
 
     pyodide.setStdout({
         batched: (msg) => {
@@ -34,7 +68,9 @@ async function runPython() {
     });
 
     pyodide.runPython(code);
+
 }
+
 </script>
 
 </body>
