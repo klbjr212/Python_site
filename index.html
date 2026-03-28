@@ -1,77 +1,455 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Python in Browser</title>
-
-<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
-
-</head>
-
-<body>
-
-<h2>Run Python in Your Browser</h2>
-
-<textarea id="code" rows="10" cols="60">
-for i in range(5):
-    print("Hello", i)
-</textarea>
-
-<br><br>
-
-<button onclick="runPython()">Run Python</button>
-
-<pre id="output"></pre>
-
-<script>
-
-let pyodide;
-
-// Load Python once when page loads
-async function loadPython(){
-    pyodide = await loadPyodide();
-}
-
-loadPython();
-
-
-// TAB indentation for Python
-document.getElementById("code").addEventListener("keydown", function(e) {
-
-    if (e.key === "Tab") {
-
-        e.preventDefault();
-
-        let start = this.selectionStart;
-        let end = this.selectionEnd;
-
-        this.value =
-            this.value.substring(0, start) +
-            "    " +
-            this.value.substring(end);
-
-        this.selectionStart = this.selectionEnd = start + 4;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOC Update Builder</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(7, 17, 31, 0.82);
+      --panel-soft: rgba(15, 30, 52, 0.88);
+      --line: #234266;
+      --text: #eff6ff;
+      --muted: #a7bad4;
+      --accent: #66d9ef;
+      --accent-strong: #22c55e;
+      --danger: #f97316;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
     }
 
-});
+    * {
+      box-sizing: border-box;
+    }
 
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(102, 217, 239, 0.2), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(34, 197, 94, 0.12), transparent 24%),
+        linear-gradient(160deg, #030712 0%, #08101d 42%, #0a1728 100%);
+    }
 
-async function runPython() {
+    .shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 20px 40px;
+    }
 
-    let code = document.getElementById("code").value;
+    .hero {
+      margin-bottom: 24px;
+    }
 
-    document.getElementById("output").textContent = "";
+    .eyebrow {
+      display: inline-block;
+      padding: 6px 10px;
+      border: 1px solid rgba(102, 217, 239, 0.35);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(7, 17, 31, 0.5);
+    }
 
-    pyodide.setStdout({
-        batched: (msg) => {
-            document.getElementById("output").textContent += msg + "\n";
-        }
-    });
+    h1 {
+      margin: 14px 0 10px;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      line-height: 1;
+    }
 
-    pyodide.runPython(code);
+    .hero p {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
 
-}
+    .layout {
+      display: grid;
+      grid-template-columns: 1.12fr 0.88fr;
+      gap: 20px;
+    }
 
-</script>
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(102, 217, 239, 0.12);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
 
+    .panel-head {
+      padding: 20px 22px 0;
+    }
+
+    .panel-head h2 {
+      margin: 0 0 6px;
+      font-size: 1.2rem;
+    }
+
+    .panel-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 20px 22px 22px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: var(--panel-soft);
+      color: var(--text);
+      font: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      background: rgba(17, 35, 60, 0.95);
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 0 22px 22px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: var(--accent);
+      color: #062036;
+    }
+
+    .success {
+      background: var(--accent-strong);
+      color: #03220f;
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .warning {
+      background: var(--danger);
+      color: #fff7ed;
+    }
+
+    .note {
+      padding: 0 22px 24px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .output-wrap {
+      padding: 20px 22px 22px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 22px 16px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(102, 217, 239, 0.1);
+      border: 1px solid rgba(102, 217, 239, 0.18);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Fiber Outage Helper</div>
+      <h1>NOC Update Builder</h1>
+      <p>Fill out the outage details, generate a clean customer-impact update, then copy it for tickets, Slack, or email.</p>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Incident Inputs</h2>
+          <p>These fields match the details from your Python script, with a few fixes to the wording and final message.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="state">State</label>
+            <input id="state" placeholder="TX" />
+          </div>
+          <div class="field">
+            <label for="city">City</label>
+            <input id="city" placeholder="Dallas" />
+          </div>
+          <div class="field">
+            <label for="ltCard">LT Card</label>
+            <input id="ltCard" placeholder="LT3" />
+          </div>
+          <div class="field">
+            <label for="ponPort">PON Port</label>
+            <input id="ponPort" placeholder="8" />
+          </div>
+          <div class="field">
+            <label for="customer">Affected Customers</label>
+            <input id="customer" type="number" min="0" placeholder="24" />
+          </div>
+          <div class="field">
+            <label for="psaText">PSA Ticket Created?</label>
+            <select id="psaText">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="damageType">Damage Found</label>
+            <input id="damageType" placeholder="Fiber cut / pole damage / not found yet" />
+          </div>
+          <div class="field">
+            <label for="alarmType">Alarm Tool Confirmed</label>
+            <select id="alarmType">
+              <option value="AMS">AMS</option>
+              <option value="Mosaic">Mosaic</option>
+              <option value="AOE">AOE</option>
+              <option value="Calix">Calix</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="etr">ETR</label>
+            <input id="etr" placeholder="2 hours or no" />
+          </div>
+          <div class="field">
+            <label for="eta">ETA</label>
+            <input id="eta" placeholder="45 minutes or no" />
+          </div>
+          <div class="field">
+            <label for="status">Current Status</label>
+            <input id="status" placeholder="Tech dispatched / repair in progress" />
+          </div>
+          <div class="field">
+            <label for="lcp">LCP Name</label>
+            <input id="lcp" placeholder="LCP-ARL-01" />
+          </div>
+          <div class="field">
+            <label for="fieldTechName">Field Tech Name</label>
+            <input id="fieldTechName" placeholder="John Smith" />
+          </div>
+          <div class="field">
+            <label for="nftTech">NFT Tech Name</label>
+            <input id="nftTech" placeholder="Maria Davis" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" type="button" onclick="buildUpdate()">Generate Update</button>
+          <button class="success" type="button" onclick="copyUpdate()">Copy Update</button>
+          <button class="ghost" type="button" onclick="loadSample()">Load Sample</button>
+          <button class="warning" type="button" onclick="resetForm()">Clear Form</button>
+        </div>
+
+        <div class="note">If you type <code>no</code> for ETA or ETR, the generated update will say there is no ETA or ETR available.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Generated Update</h2>
+          <p>Edit the final text if needed before you copy it.</p>
+        </div>
+
+        <div class="status-bar">
+          <div class="chip">PSA logic included</div>
+          <div class="chip">ETA / ETR handling fixed</div>
+          <div class="chip">Ticket-ready format</div>
+        </div>
+
+        <div class="output-wrap">
+          <label for="output">Update Text</label>
+          <textarea id="output" placeholder="Your outage update will appear here."></textarea>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function value(id) {
+      return document.getElementById(id).value.trim();
+    }
+
+    function normalizeNo(text) {
+      return text.toLowerCase() === "no";
+    }
+
+    function buildUpdate() {
+      const state = value("state");
+      const city = value("city");
+      const ltCard = value("ltCard");
+      const ponPort = value("ponPort");
+      const customer = value("customer");
+      const psaText = value("psaText");
+      const damageType = value("damageType");
+      const etr = value("etr");
+      const eta = value("eta");
+      const status = value("status");
+      const alarmType = value("alarmType");
+      const fieldTechName = value("fieldTechName");
+      const nftTech = value("nftTech");
+      const lcp = value("lcp");
+
+      const psaResult = psaText === "yes"
+        ? "A PSA ticket has been created."
+        : "No PSA ticket has been created.";
+
+      const etrResult = normalizeNo(etr) || !etr
+        ? "There is no ETR at this time."
+        : `The ETR is ${etr}.`;
+
+      const etaResult = normalizeNo(eta) || !eta
+        ? "There is no ETA at this time."
+        : `The ETA is ${eta}.`;
+
+      const locationText = [city, state].filter(Boolean).join(", ");
+      const customerText = customer ? `${customer} affected customer${customer === "1" ? "" : "s"}` : "an unknown number of affected customers";
+      const damageText = damageType ? `Damage status: ${damageType}.` : "Damage has not been confirmed yet.";
+      const fieldDispatchText = fieldTechName
+        ? `NOC requested ${fieldTechName} to dispatch${locationText ? ` to ${locationText}` : ""}.`
+        : `NOC is coordinating a field dispatch${locationText ? ` to ${locationText}` : ""}.`;
+      const nftText = nftTech ? `NFT tech assigned: ${nftTech}.` : "";
+      const statusText = status ? `Current status: ${status}.` : "";
+
+      const update = [
+        `NOC received a ${alarmType} alarm showing LT ${ltCard || "N/A"} PON ${ponPort || "N/A"} down at ${lcp || "the LCP"}.`,
+        `Impact: ${customerText}.`,
+        psaResult,
+        fieldDispatchText,
+        nftText,
+        damageText,
+        etrResult,
+        etaResult,
+        statusText
+      ].filter(Boolean).join(" ");
+
+      document.getElementById("output").value = update;
+    }
+
+    async function copyUpdate() {
+      const output = document.getElementById("output");
+      if (!output.value.trim()) {
+        buildUpdate();
+      }
+
+      try {
+        await navigator.clipboard.writeText(output.value);
+      } catch (error) {
+        output.select();
+        document.execCommand("copy");
+      }
+    }
+
+    function loadSample() {
+      document.getElementById("state").value = "TX";
+      document.getElementById("city").value = "Arlington";
+      document.getElementById("ltCard").value = "LT7";
+      document.getElementById("ponPort").value = "4";
+      document.getElementById("customer").value = "63";
+      document.getElementById("psaText").value = "yes";
+      document.getElementById("damageType").value = "possible fiber cut found near the handhole";
+      document.getElementById("etr").value = "3 hours";
+      document.getElementById("eta").value = "40 minutes";
+      document.getElementById("status").value = "Field tech en route";
+      document.getElementById("alarmType").value = "Mosaic";
+      document.getElementById("fieldTechName").value = "Chris Reed";
+      document.getElementById("nftTech").value = "Dana Cole";
+      document.getElementById("lcp").value = "ARL-LCP-22";
+      buildUpdate();
+    }
+
+    function resetForm() {
+      [
+        "state",
+        "city",
+        "ltCard",
+        "ponPort",
+        "customer",
+        "damageType",
+        "etr",
+        "eta",
+        "status",
+        "fieldTechName",
+        "nftTech",
+        "lcp"
+      ].forEach((id) => {
+        document.getElementById(id).value = "";
+      });
+
+      document.getElementById("psaText").value = "yes";
+      document.getElementById("alarmType").value = "AMS";
+      document.getElementById("output").value = "";
+    }
+  </script>
 </body>
 </html>
